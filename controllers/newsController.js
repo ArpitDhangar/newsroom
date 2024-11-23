@@ -1,10 +1,6 @@
 import scrapeAllHeadlines from '../services/scraper.js';
 
 
-export const getHome = (req, res) => {
-    res.send("Good Job")
-}
-
 export const getHeadlines = async (req, res) => {
     try {
         const headlines = await scrapeAllHeadlines();

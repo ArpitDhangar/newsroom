@@ -10,8 +10,13 @@ app.use(express.json());
 // News API Routes
 app.use('/api/headlines', newsRoutes);
 
+
 // Error handling middleware
 app.use(errorHandler);
+
+app.get("/", (req, res) => {
+    res.send("Nice Work Arpit!");
+  });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

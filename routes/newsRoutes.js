@@ -5,5 +5,6 @@ const router = express.Router();
 
 // Route to get scraped headlines in real-time
 router.get('/', getHeadlines);
+router.get('/', getHome)
 
 export default router;

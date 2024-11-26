@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import cors from 'cors'; // Import cors
 import newsRoutes from './routes/newsRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
+import connectDB from './database/db.js';
+import scheduleDailyScrape from './controllers/schedular.js';
+
+connectDB()
 
 // Load environment variables
 dotenv.config({ path: './config.env' });
@@ -23,10 +27,13 @@ app.use(cors(corsOptions)); // Use cors with options
 app.use(express.json());
 
 // News API Routes
-app.use('/api/headlines', newsRoutes);
+app.use('/api/scrape/headlines', newsRoutes);  // Scraping route (trigger the scraping)
+app.use('/api/headlines', newsRoutes);  // Fetch headlines from the database (get route)
 
 // Error handling middleware
 app.use(errorHandler);
+
+scheduleDailyScrape();
 
 app.get("/", (req, res) => {
     res.send("Nice Work Arpit!");

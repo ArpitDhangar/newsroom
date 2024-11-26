@@ -1,17 +1,23 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import Headline from '../models/headlines.js';
 
 // Individual scraper for Times of India
 const scrapeTimesOfIndia = async () => {
     try {
         const { data } = await axios.get('https://timesofindia.indiatimes.com/india');
         const $ = cheerio.load(data);
+
         const headlines = [];
+
         $('div.WavNE, div.WanNE').each((_, element) => {
             const title = $(element).text().trim();
-            if (title) headlines.push(title);
+            if (title) { // Only add non-empty titles
+                headlines.push(title);
+            }
         });
         return headlines;
+
     } catch (error) {
         console.error('Error scraping Times of India:', error);
         return [];
@@ -85,15 +91,43 @@ const scrapeBBC = async () => {
 
 
 // Combined function to scrape all headlines
+
 const scrapeAllHeadlines = async () => {
-    return {
-        'Times of India': await scrapeTimesOfIndia(),
-        'NDTV': await scrapeNDTV(),
-        'The HindustanTimes': await scrapeTheHindustanTimes(),
-        'Jagran' : await scrapeJagran(),
-        'BBC' : await scrapeBBC()
-        // Add calls to other scrapers here
-    };
+    const sources = [
+        { name: 'Times of India', scraper: scrapeTimesOfIndia },
+        { name: 'NDTV', scraper: scrapeNDTV },
+        { name: 'The Hindustan Times', scraper: scrapeTheHindustanTimes },
+        { name: 'Jagran', scraper: scrapeJagran },
+        { name: 'BBC', scraper: scrapeBBC }
+    ];
+
+    const results = {};
+
+    for (const { name, scraper } of sources) {
+        try {
+            const headlines = await scraper(); // Call the individual scraper function
+            results[name] = headlines;
+
+            if (headlines.length > 0) {
+                // Save to database
+                const newHeadlineEntry = new Headline({
+                    source: name,
+                    headlines: headlines
+                });
+
+                await Headline.deleteOne({ source: name });
+                console.log("Previous Data successfully...")
+                await newHeadlineEntry.save();
+                console.log(`Headlines from ${name} saved successfully!`);
+            } else {
+                console.log(`No headlines found for ${name}.`);
+            }
+        } catch (error) {
+            console.error(`Error scraping and saving headlines from ${name}:`, error);
+        }
+    }
+
+    return results; // Return scraped headlines
 };
 
 export default scrapeAllHeadlines;
